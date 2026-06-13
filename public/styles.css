@@ -449,4 +449,14 @@ h2 {
   border-radius: 12px;
   box-shadow: var(--shadow);
   z-index: 20;
+  max-width: calc(100vw - 32px);
+}
+
+/* On narrow screens the composer sits at the bottom, so anchor the toast just
+   below the header instead — it never covers the message input that way. */
+@media (max-width: 600px) {
+  .toast {
+    bottom: auto;
+    top: 70px;
+  }
 }
