@@ -97,10 +97,29 @@ Current limits (sliding window, per fingerprint):
 
 Over the limit → HTTP `429`. No request logging includes IPs.
 
-`X-Forwarded-For` is **ignored by default** (clients could spoof it); set
-`BRIDGE_TRUST_PROXY=1` only when running behind a trusted proxy. The OS socket layer
-transiently sees the IP regardless, so for a real deployment also disable proxy
-access logs and run behind something that strips the IP before it reaches the app.
+Proxy headers are **ignored by default** (clients could spoof them). Set
+`BRIDGE_TRUST_PROXY=1` only when running behind a trusted proxy; the app then uses,
+in order of preference:
+
+1. **`X-Client-FP`** — the recommended deploy setup. Your proxy hashes/anonymizes the
+   client IP and forwards only that opaque value; the app re-hashes it with the
+   in-RAM secret and never sees a raw IP, while keeping per-client throttling.
+2. **`X-Forwarded-For`** — first hop, hashed in-app (use only if the proxy can't
+   pre-hash; coarser privacy than option 1).
+
+Example (nginx): hash the IP at the edge and forward only the hash, never the raw IP:
+
+```nginx
+proxy_set_header X-Client-FP $hashed_ip;   # app trusts this with BRIDGE_TRUST_PROXY=1
+proxy_set_header X-Forwarded-For "";       # never forward the raw client IP
+proxy_set_header X-Real-IP "";
+access_log off;                            # or anonymize (mask last octet)
+```
+
+The OS socket layer transiently sees the IP regardless, so for a real deployment also
+disable proxy access logs and strip the raw IP before it reaches the app. A Tor
+hidden service is the only setup where even the proxy never learns the client IP
+(at the cost of per-client throttling — every request looks like `127.0.0.1`).
 
 ## Project layout
 

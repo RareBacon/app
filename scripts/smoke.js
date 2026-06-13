@@ -13,6 +13,8 @@ process.env.BRIDGE_IDLE_MS = '999999'; // don't fire idle prompts mid-test
 const base = `http://localhost:${PORT}`;
 let failures = 0;
 
+const { clientFingerprint, fingerprint } = await import('../src/ratelimit.js');
+
 function check(name, cond) {
   if (cond) {
     console.log(`  ✓ ${name}`);
@@ -189,6 +191,24 @@ async function main() {
     }
   }
   check('session flood eventually returns 429', got429);
+
+  console.log('6) Trusted-proxy fingerprinting (X-Client-FP)');
+  const reqWith = (fp) => ({ headers: { 'x-client-fp': fp }, socket: { remoteAddress: '1.2.3.4' } });
+  delete process.env.BRIDGE_TRUST_PROXY;
+  check(
+    'header is ignored when proxy is not trusted',
+    clientFingerprint(reqWith('client-a')) === fingerprint('1.2.3.4'),
+  );
+  process.env.BRIDGE_TRUST_PROXY = '1';
+  check(
+    'trusted header drives the fingerprint',
+    clientFingerprint(reqWith('client-a')) === fingerprint('client-a'),
+  );
+  check(
+    'different clients get different fingerprints',
+    clientFingerprint(reqWith('client-a')) !== clientFingerprint(reqWith('client-b')),
+  );
+  delete process.env.BRIDGE_TRUST_PROXY;
 
   console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
   process.exit(failures === 0 ? 0 : 1);

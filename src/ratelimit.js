@@ -18,16 +18,29 @@ export function fingerprint(ip) {
   return createHmac('sha256', SECRET).update(ip).digest('hex');
 }
 
-// Extract the client IP for the *sole* purpose of immediately fingerprinting it.
-// By default we use the socket address. Only trust X-Forwarded-For if the operator
-// explicitly opts in (BRIDGE_TRUST_PROXY=1) — otherwise clients could spoof it.
+// Extract a throttling identity for the request and return its fingerprint.
+//
+// Default (local / no proxy): hash the socket IP. The raw IP is only a transient
+// argument and is never stored.
+//
+// Behind a trusted proxy (BRIDGE_TRUST_PROXY=1), prefer values the proxy supplies
+// so the app need never see a raw client IP at all:
+//   1. X-Client-FP    — the proxy already hashed/anonymized the client. We re-hash
+//                        it with our in-RAM secret for domain separation, so a
+//                        leaked header value can't be replayed across restarts.
+//   2. X-Forwarded-For — first hop, hashed here (use only if the proxy can't
+//                        pre-hash; coarser privacy than option 1).
+// Untrusted requests never get to set these — clients could otherwise spoof them.
 export function clientFingerprint(req) {
-  let ip = req.socket?.remoteAddress || '';
   if (process.env.BRIDGE_TRUST_PROXY === '1') {
+    const pre = req.headers['x-client-fp'];
+    if (typeof pre === 'string' && pre) return fingerprint(pre);
     const fwd = req.headers['x-forwarded-for'];
-    if (typeof fwd === 'string' && fwd.length) ip = fwd.split(',')[0].trim();
+    if (typeof fwd === 'string' && fwd.length) {
+      return fingerprint(fwd.split(',')[0].trim()); // raw IP discarded after hashing
+    }
   }
-  return fingerprint(ip); // raw `ip` goes out of scope here and is never stored
+  return fingerprint(req.socket?.remoteAddress || ''); // raw IP discarded after hashing
 }
 
 // Create an independent sliding-window limiter. Each limiter owns its own Map so
