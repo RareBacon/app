@@ -74,8 +74,8 @@
           </ul>
           <button class="btn primary big" id="start-btn">Get started</button>
           <p class="fineprint">
-            Conversations are ephemeral and never stored. See how privacy works in
-            the README.
+            Conversations are ephemeral and never stored.
+            <button class="btn link inline" id="landing-impact" type="button">Does this actually work? →</button>
           </p>
         </div>
       </section>
@@ -145,17 +145,46 @@
       <section class="view hidden" id="view-feedback">
         <h2>That's a wrap.</h2>
         <p class="muted" id="feedback-reason"></p>
-        <p>Did this help you understand the other side a little better?</p>
-        <div class="feedback-btns">
-          <button class="btn primary" data-understood="true">Yes, clearer now</button>
-          <button class="btn ghost" data-understood="false">Not really</button>
+
+        <div id="feedback-form">
+          <div class="qblock" id="q-understood">
+            <p class="qlabel">Do you understand the other side better than before?</p>
+            <div class="choice-group" data-q="understood">
+              <button class="btn ghost choice" type="button" data-val="true">Yes</button>
+              <button class="btn ghost choice" type="button" data-val="false">Not really</button>
+            </div>
+          </div>
+          <div class="qblock hidden" id="q-changed">
+            <p class="qlabel">Did this shift your thinking at all?</p>
+            <div class="choice-group" data-q="changed">
+              <button class="btn ghost choice" type="button" data-val="true">Yes, a bit</button>
+              <button class="btn ghost choice" type="button" data-val="false">No</button>
+            </div>
+          </div>
         </div>
-        <label class="changed">
-          <input type="checkbox" id="changed-mind" /> It actually shifted my thinking
-        </label>
-        <div>
+
+        <div id="feedback-thanks" class="hidden">
+          <p class="thanks-msg">
+            Thank you — this is exactly what we measure: whether real conversations
+            actually help people understand each other.
+          </p>
+        </div>
+
+        <div class="feedback-foot">
           <button class="btn link" id="again-btn">Have another conversation</button>
+          <button class="btn link" id="impact-link">See the impact so far →</button>
         </div>
+      </section>
+
+      <!-- IMPACT -->
+      <section class="view hidden" id="view-impact">
+        <h2>Does this actually work?</h2>
+        <p class="muted">
+          Anonymous, aggregate signal from people right after their conversations.
+          No identities, ever — just whether it moved anyone.
+        </p>
+        <div id="impact-stats" class="impact-stats"></div>
+        <button class="btn ghost" id="impact-back">Back</button>
       </section>
     </main>
 

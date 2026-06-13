@@ -8,6 +8,7 @@ import {
   showFeedback,
   wireFeedback,
 } from './chat.js';
+import { renderImpact } from './impact.js';
 
 // Landing -> onboarding.
 document.getElementById('start-btn').addEventListener('click', async () => {
@@ -32,6 +33,15 @@ wireFeedback(() => {
   leaveQueueView();
   showView('view-queue');
 });
+
+// Impact dashboard — reachable from the landing and the post-chat thank-you.
+async function openImpact() {
+  await renderImpact();
+  showView('view-impact');
+}
+document.getElementById('landing-impact').addEventListener('click', openImpact);
+document.getElementById('impact-link').addEventListener('click', openImpact);
+document.getElementById('impact-back').addEventListener('click', () => showView('view-landing'));
 
 // ---- Server-sent events ----
 on('matched', (data) => {

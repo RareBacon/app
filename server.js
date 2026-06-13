@@ -75,6 +75,39 @@ async function recordMetric(entry) {
   }
 }
 
+// Aggregate the anonymized metrics file into impact stats. Bot-practice sessions
+// are excluded from the rates so the numbers reflect real human conversations.
+async function computeMetrics() {
+  let lines = [];
+  try {
+    const raw = await readFile(join(DATA_DIR, 'metrics.jsonl'), 'utf8');
+    lines = raw
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => {
+        try {
+          return JSON.parse(l);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+  } catch {
+    // No metrics file yet — return zeros.
+  }
+  const realFeedback = lines.filter((l) => l.type === 'feedback' && !l.withBot);
+  const conversations = lines.filter((l) => l.type === 'match' && !l.withBot).length;
+  const fc = realFeedback.length;
+  const understood = realFeedback.filter((l) => l.understoodBetter).length;
+  const changed = realFeedback.filter((l) => l.changedMind).length;
+  return {
+    conversations,
+    feedbackCount: fc,
+    understoodPct: fc ? Math.round((understood / fc) * 100) : 0,
+    changedPct: fc ? Math.round((changed / fc) * 100) : 0,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Conversation orchestration.
 // ---------------------------------------------------------------------------
@@ -203,6 +236,10 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { topics: TOPICS });
   }
 
+  if (req.method === 'GET' && pathname === '/api/metrics') {
+    return sendJson(res, 200, await computeMetrics());
+  }
+
   // Fingerprint the caller for throttling. The raw IP is hashed immediately inside
   // clientFingerprint and is never retained, logged, or written to disk.
   const fp = clientFingerprint(req);
@@ -319,6 +356,7 @@ async function handleApi(req, res, url) {
       topic: String(body.topic || '').slice(0, 64),
       understoodBetter: body.understoodBetter === true,
       changedMind: body.changedMind === true,
+      withBot: body.withBot === true,
     });
     return sendJson(res, 200, { ok: true });
   }
@@ -365,6 +403,13 @@ function leaveQueueOnDisconnect(session) {
 }
 
 function onRoomMatched(room) {
+  // Anonymized counter: one per conversation. withBot lets the impact stats
+  // exclude practice-with-bot sessions.
+  recordMetric({
+    type: 'match',
+    topic: room.topicId,
+    withBot: room.participants.some((p) => p.isBot),
+  });
   const topic = getTopic(room.topicId);
   for (const p of room.participants) {
     if (p.isBot) continue;

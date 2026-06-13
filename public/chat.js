@@ -71,25 +71,59 @@ const REASONS = {
   'left-remote': 'The other person left.',
 };
 
+function resetFeedbackForm() {
+  document.querySelectorAll('.choice').forEach((b) => b.classList.remove('selected'));
+  document.getElementById('q-changed').classList.add('hidden');
+  document.getElementById('feedback-form').classList.remove('hidden');
+  document.getElementById('feedback-thanks').classList.add('hidden');
+}
+
 export function showFeedback(reason) {
   hideToast(); // don't let a stale "Matched with…" toast linger into this view
   const text = endedReason || REASONS[reason] || REASONS['left-remote'] || '';
   document.getElementById('feedback-reason').textContent = text;
+  resetFeedbackForm();
   showView('view-feedback');
 }
 
+async function submitFeedback(understoodBetter, changedMind) {
+  await api('/api/feedback', {
+    token: store.token,
+    topic: store.room?.topic?.id,
+    understoodBetter,
+    changedMind,
+    // Exclude bot-practice from the impact stats.
+    withBot: !!store.room?.participants?.some((p) => p.isBot),
+  }).catch(() => {});
+  document.getElementById('feedback-form').classList.add('hidden');
+  document.getElementById('feedback-thanks').classList.remove('hidden');
+}
+
 export function wireFeedback(onAgain) {
-  document.querySelectorAll('[data-understood]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      await api('/api/feedback', {
-        token: store.token,
-        topic: store.room?.topic?.id,
-        understoodBetter: btn.dataset.understood === 'true',
-        changedMind: document.getElementById('changed-mind').checked,
-      }).catch(() => {});
-      toast('Thanks for the feedback.');
-      btn.disabled = true;
+  // Q1: understood the other side better?
+  document.querySelectorAll('#q-understood .choice').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const understood = btn.dataset.val === 'true';
+      btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      if (understood) {
+        // Only then is "did it shift your thinking?" worth asking.
+        document.getElementById('q-changed').classList.remove('hidden');
+      } else {
+        // No need to ask — if they didn't understand better, it didn't shift.
+        submitFeedback(false, false);
+      }
     });
   });
+
+  // Q2: did it shift your thinking? (only shown after a "Yes" above)
+  document.querySelectorAll('#q-changed .choice').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      submitFeedback(true, btn.dataset.val === 'true');
+    });
+  });
+
   document.getElementById('again-btn').addEventListener('click', onAgain);
 }
