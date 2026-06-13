@@ -147,20 +147,8 @@
         <p class="muted" id="feedback-reason"></p>
 
         <div id="feedback-form">
-          <div class="qblock" id="q-understood">
-            <p class="qlabel">Do you understand the other side better than before?</p>
-            <div class="choice-group" data-q="understood">
-              <button class="btn ghost choice" type="button" data-val="true">Yes</button>
-              <button class="btn ghost choice" type="button" data-val="false">Not really</button>
-            </div>
-          </div>
-          <div class="qblock hidden" id="q-changed">
-            <p class="qlabel">Did this shift your thinking at all?</p>
-            <div class="choice-group" data-q="changed">
-              <button class="btn ghost choice" type="button" data-val="true">Yes, a bit</button>
-              <button class="btn ghost choice" type="button" data-val="false">No</button>
-            </div>
-          </div>
+          <div class="q-progress"><div class="q-progress-fill" id="q-progress-fill"></div></div>
+          <div class="qblock" id="q-current"></div>
         </div>
 
         <div id="feedback-thanks" class="hidden">

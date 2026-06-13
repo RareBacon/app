@@ -71,59 +71,121 @@ const REASONS = {
   'left-remote': 'The other person left.',
 };
 
-function resetFeedbackForm() {
-  document.querySelectorAll('.choice').forEach((b) => b.classList.remove('selected'));
-  document.getElementById('q-changed').classList.add('hidden');
-  document.getElementById('feedback-form').classList.remove('hidden');
-  document.getElementById('feedback-thanks').classList.add('hidden');
+// A short post-conversation questionnaire — one quick tap each. Questions can be
+// conditional via `when` (e.g. don't ask if their thinking shifted when they
+// didn't even understand the other side better).
+const QUESTIONS = [
+  {
+    id: 'understood',
+    label: 'Do you understand the other side better than before?',
+    options: [
+      { l: 'Yes', v: 'yes' },
+      { l: 'Not really', v: 'no' },
+    ],
+  },
+  {
+    id: 'changed',
+    label: 'Did it shift your thinking at all?',
+    when: (a) => a.understood === 'yes',
+    options: [
+      { l: 'Yes, a bit', v: 'yes' },
+      { l: 'No', v: 'no' },
+    ],
+  },
+  {
+    id: 'commonGround',
+    label: 'Did you find any common ground?',
+    options: [
+      { l: 'Yes', v: 'yes' },
+      { l: 'A little', v: 'some' },
+      { l: 'No', v: 'no' },
+    ],
+  },
+  {
+    id: 'respectful',
+    label: 'Was the conversation respectful and in good faith?',
+    options: [
+      { l: 'Yes', v: 'yes' },
+      { l: 'Mostly', v: 'mostly' },
+      { l: 'Not really', v: 'no' },
+    ],
+  },
+  {
+    id: 'again',
+    label: 'Would you do this again?',
+    options: [
+      { l: 'Definitely', v: 'yes' },
+      { l: 'Maybe', v: 'maybe' },
+      { l: 'No', v: 'no' },
+    ],
+  },
+];
+
+let answers = {};
+
+function applicableQuestions() {
+  return QUESTIONS.filter((q) => !q.when || q.when(answers));
+}
+
+function renderQuestion() {
+  const list = applicableQuestions();
+  const next = list.find((q) => !(q.id in answers));
+  const answered = list.filter((q) => q.id in answers).length;
+  const fill = document.getElementById('q-progress-fill');
+
+  if (!next) {
+    fill.style.width = '100%';
+    finishFeedback();
+    return;
+  }
+  fill.style.width = Math.round((answered / list.length) * 100) + '%';
+
+  const opts = next.options
+    .map(
+      (o) =>
+        `<button class="btn ghost choice" type="button" data-val="${o.v}">${escapeHtml(o.l)}</button>`,
+    )
+    .join('');
+  const el = document.getElementById('q-current');
+  el.innerHTML = `<p class="qlabel">${escapeHtml(next.label)}</p><div class="choice-group">${opts}</div>`;
+  el.querySelectorAll('.choice').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      el.querySelectorAll('.choice').forEach((b) => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      answers[next.id] = btn.dataset.val;
+      setTimeout(renderQuestion, 220); // brief confirm, then advance
+    });
+  });
+}
+
+async function finishFeedback() {
+  await api('/api/feedback', {
+    token: store.token,
+    topic: store.room?.topic?.id,
+    // Exclude bot-practice from the impact stats.
+    withBot: !!store.room?.participants?.some((p) => p.isBot),
+    understoodBetter: answers.understood === 'yes',
+    changedMind: answers.changed === 'yes',
+    commonGround: answers.commonGround,
+    respectful: answers.respectful,
+    again: answers.again,
+  }).catch(() => {});
+  document.getElementById('feedback-form').classList.add('hidden');
+  document.getElementById('feedback-thanks').classList.remove('hidden');
 }
 
 export function showFeedback(reason) {
   hideToast(); // don't let a stale "Matched with…" toast linger into this view
   const text = endedReason || REASONS[reason] || REASONS['left-remote'] || '';
   document.getElementById('feedback-reason').textContent = text;
-  resetFeedbackForm();
+  // Reset and start the questionnaire fresh.
+  answers = {};
+  document.getElementById('feedback-form').classList.remove('hidden');
+  document.getElementById('feedback-thanks').classList.add('hidden');
+  renderQuestion();
   showView('view-feedback');
 }
 
-async function submitFeedback(understoodBetter, changedMind) {
-  await api('/api/feedback', {
-    token: store.token,
-    topic: store.room?.topic?.id,
-    understoodBetter,
-    changedMind,
-    // Exclude bot-practice from the impact stats.
-    withBot: !!store.room?.participants?.some((p) => p.isBot),
-  }).catch(() => {});
-  document.getElementById('feedback-form').classList.add('hidden');
-  document.getElementById('feedback-thanks').classList.remove('hidden');
-}
-
 export function wireFeedback(onAgain) {
-  // Q1: understood the other side better?
-  document.querySelectorAll('#q-understood .choice').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const understood = btn.dataset.val === 'true';
-      btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      if (understood) {
-        // Only then is "did it shift your thinking?" worth asking.
-        document.getElementById('q-changed').classList.remove('hidden');
-      } else {
-        // No need to ask — if they didn't understand better, it didn't shift.
-        submitFeedback(false, false);
-      }
-    });
-  });
-
-  // Q2: did it shift your thinking? (only shown after a "Yes" above)
-  document.querySelectorAll('#q-changed .choice').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      submitFeedback(true, btn.dataset.val === 'true');
-    });
-  });
-
   document.getElementById('again-btn').addEventListener('click', onAgain);
 }

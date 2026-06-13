@@ -22,9 +22,14 @@ export async function renderImpact() {
   const stat = (num, label) =>
     `<div class="stat"><div class="stat-num">${num}</div><div class="stat-label">${label}</div></div>`;
 
+  const plural = (n, one, many) => (n === 1 ? one : many);
+
   el.innerHTML =
-    stat(d.conversations, 'conversations had') +
+    stat(d.conversations, plural(d.conversations, 'conversation had', 'conversations had')) +
     stat(d.understoodPct + '%', 'understood the other side better') +
     stat(d.changedPct + '%', 'said it shifted their thinking') +
-    stat(d.feedbackCount, 'people shared feedback');
+    stat(d.commonGroundPct + '%', 'found common ground') +
+    stat(d.respectfulPct + '%', 'found it respectful & good-faith') +
+    stat(d.againPct + '%', 'would do it again') +
+    stat(d.feedbackCount, plural(d.feedbackCount, 'person shared feedback', 'people shared feedback'));
 }

@@ -98,13 +98,15 @@ async function computeMetrics() {
   const realFeedback = lines.filter((l) => l.type === 'feedback' && !l.withBot);
   const conversations = lines.filter((l) => l.type === 'match' && !l.withBot).length;
   const fc = realFeedback.length;
-  const understood = realFeedback.filter((l) => l.understoodBetter).length;
-  const changed = realFeedback.filter((l) => l.changedMind).length;
+  const pct = (pred) => (fc ? Math.round((realFeedback.filter(pred).length / fc) * 100) : 0);
   return {
     conversations,
     feedbackCount: fc,
-    understoodPct: fc ? Math.round((understood / fc) * 100) : 0,
-    changedPct: fc ? Math.round((changed / fc) * 100) : 0,
+    understoodPct: pct((l) => l.understoodBetter),
+    changedPct: pct((l) => l.changedMind),
+    commonGroundPct: pct((l) => l.commonGround === 'yes' || l.commonGround === 'some'),
+    respectfulPct: pct((l) => l.respectful === 'yes' || l.respectful === 'mostly'),
+    againPct: pct((l) => l.again === 'yes' || l.again === 'maybe'),
   };
 }
 
@@ -351,11 +353,15 @@ async function handleApi(req, res, url) {
 
   if (req.method === 'POST' && pathname === '/api/feedback') {
     const body = await readBody(req);
+    const oneOf = (val, allowed) => (allowed.includes(val) ? val : undefined);
     await recordMetric({
       type: 'feedback',
       topic: String(body.topic || '').slice(0, 64),
       understoodBetter: body.understoodBetter === true,
       changedMind: body.changedMind === true,
+      commonGround: oneOf(body.commonGround, ['yes', 'some', 'no']),
+      respectful: oneOf(body.respectful, ['yes', 'mostly', 'no']),
+      again: oneOf(body.again, ['yes', 'maybe', 'no']),
       withBot: body.withBot === true,
     });
     return sendJson(res, 200, { ok: true });
