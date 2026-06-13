@@ -76,9 +76,7 @@ body {
 }
 
 body {
-  background: radial-gradient(900px 500px at 85% -10%, var(--accent-soft), transparent 60%),
-    radial-gradient(800px 480px at -5% 0%, rgba(79, 125, 110, 0.14), transparent 55%),
-    var(--bg);
+  background: var(--bg);
   color: var(--ink);
   font: 17px/1.6 var(--sans);
   min-height: 100vh;
@@ -532,7 +530,7 @@ h2 {
   border-left-color: var(--accent);
 }
 .msg.kind-seed {
-  background: linear-gradient(180deg, var(--accent-soft), transparent);
+  background: var(--accent-soft);
 }
 .msg.kind-nudge {
   border-left-color: var(--warm);
