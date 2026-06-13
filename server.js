@@ -24,12 +24,8 @@ import {
 import { joinQueue, leaveQueue, cancelBotFallback } from './src/matchmaker.js';
 import { TOPICS, getTopic } from './src/topics.js';
 import { assessMessage } from './src/moderation.js';
-import {
-  openingMessages,
-  reactToMessage,
-  idlePrompt,
-  maybeLlmNudge,
-} from './src/mediator.js';
+import { openingMessages, reactToMessage } from './src/mediator.js';
+import { getNewsForTopic } from './src/news.js';
 import { botReply } from './src/bot.js';
 import { clientFingerprint, createLimiter } from './src/ratelimit.js';
 
@@ -37,7 +33,6 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const PUBLIC_DIR = join(__dirname, 'public');
 const DATA_DIR = join(__dirname, 'data');
 const PORT = Number(process.env.PORT || 3000);
-const IDLE_PROMPT_MS = Number(process.env.BRIDGE_IDLE_MS || 45000);
 const BOT_REPLY_DELAY_MS = Number(process.env.BRIDGE_BOT_REPLY_MS || 2500);
 
 // Privacy-preserving throttles. These operate on unreversible IP fingerprints
@@ -118,21 +113,11 @@ function postRoomMessage(room, message) {
   room.messages.push(full);
   room.lastActivity = Date.now();
   broadcastRoom(room, 'message', full);
-  armIdleTimer(room);
   return full;
 }
 
 function cryptoId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
-function armIdleTimer(room) {
-  if (room.idleTimer) clearTimeout(room.idleTimer);
-  if (room.closed) return;
-  room.idleTimer = setTimeout(() => {
-    if (room.closed) return;
-    postRoomMessage(room, idlePrompt());
-  }, IDLE_PROMPT_MS);
 }
 
 function startRoom(room) {
@@ -165,7 +150,6 @@ function maybeBotReply(room) {
 function endRoom(room, reason) {
   if (room.closed) return;
   room.closed = true;
-  if (room.idleTimer) clearTimeout(room.idleTimer);
   broadcastRoom(room, 'ended', { reason });
   for (const p of room.participants) {
     if (p.isBot) continue;
@@ -242,6 +226,11 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, await computeMetrics());
   }
 
+  if (req.method === 'GET' && pathname === '/api/news') {
+    const items = await getNewsForTopic(url.searchParams.get('topic'));
+    return sendJson(res, 200, { items });
+  }
+
   // Fingerprint the caller for throttling. The raw IP is hashed immediately inside
   // clientFingerprint and is never retained, logged, or written to disk.
   const fp = clientFingerprint(req);
@@ -268,6 +257,11 @@ async function handleApi(req, res, url) {
     if (session.roomId) return sendJson(res, 409, { error: 'already in a conversation' });
     const topic = getTopic(body.topic);
     if (!topic) return sendJson(res, 400, { error: 'unknown topic' });
+    // Just-in-time "why": collected when the user picks a topic to discuss (not
+    // up front on the stance page). Seeded into the chat opener for this topic.
+    if (typeof body.reasoning === 'string' && body.reasoning.trim()) {
+      session.reasonings[body.topic] = body.reasoning.trim().slice(0, 600);
+    }
     const result = joinQueue(session, body.topic, (room) => {
       onRoomMatched(room);
     });
@@ -303,14 +297,7 @@ async function handleApi(req, res, url) {
       ts: Date.now(),
     });
 
-    for (const m of reactToMessage(room, assessment)) postRoomMessage(room, m);
-
-    // Optional LLM nudge (only if configured and nothing more pressing fired).
-    if (!assessment.hostile && process.env.ANTHROPIC_API_KEY) {
-      maybeLlmNudge(room).then((m) => {
-        if (m && !room.closed) postRoomMessage(room, m);
-      });
-    }
+    for (const m of reactToMessage(assessment)) postRoomMessage(room, m);
 
     maybeBotReply(room);
     return sendJson(res, 200, { ok: true });
@@ -479,11 +466,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`BRIDGE listening on http://localhost:${PORT}`);
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.log('Mediator: rule-based (set ANTHROPIC_API_KEY to enable LLM nudges).');
-  } else {
-    console.log('Mediator: LLM-assisted (ANTHROPIC_API_KEY detected).');
-  }
 });
 
 export { server };

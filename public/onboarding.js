@@ -8,7 +8,7 @@ export async function renderOnboarding() {
     .map(
       (t) => `
       <div class="topic-card" data-topic="${t.id}">
-        <div class="heat">${t.volatility} heat</div>
+        <div class="heat heat-${t.volatility}">${t.volatility} heat</div>
         <div class="statement">${escapeHtml(t.statement)}</div>
         <div class="slider-row">
           <input type="range" min="-3" max="3" step="1" value="0"
@@ -16,8 +16,6 @@ export async function renderOnboarding() {
                  data-stance="${t.id}" />
           <span class="stance-label" data-label="${t.id}">Neutral</span>
         </div>
-        <textarea class="reason" data-reason="${t.id}" maxlength="600"
-          placeholder="Optional: why do you believe this? (your match sees this first)"></textarea>
       </div>`,
     )
     .join('');
@@ -37,12 +35,8 @@ export function wireOnboarding(onDone) {
   document.getElementById('onboarding-continue').addEventListener('click', async () => {
     const nickname = document.getElementById('nickname').value.trim() || 'Anonymous';
     const stances = {};
-    const reasonings = {};
     document.querySelectorAll('[data-stance]').forEach((el) => {
       stances[el.dataset.stance] = Number(el.value);
-    });
-    document.querySelectorAll('[data-reason]').forEach((el) => {
-      if (el.value.trim()) reasonings[el.dataset.reason] = el.value.trim();
     });
 
     const hasOpinion = Object.values(stances).some((v) => v !== 0);
@@ -55,12 +49,11 @@ export function wireOnboarding(onDone) {
       const { token, nickname: nick } = await api('/api/session', {
         nickname,
         stances,
-        reasonings,
       });
       store.token = token;
       store.nickname = nick;
       store.stances = stances;
-      store.reasonings = reasonings;
+      store.reasonings = {};
       connectStream();
       onDone();
     } catch (e) {

@@ -383,10 +383,26 @@ h2 {
 }
 .topic-card .heat {
   font-size: 11.5px;
-  color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 700;
+}
+.topic-card .heat::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: currentColor;
+}
+/* High heat stays in the hot accent; medium reads calmer/neutral. */
+.heat-high {
+  color: var(--accent);
+}
+.heat-medium {
+  color: var(--muted);
 }
 .slider-row {
   display: flex;
@@ -501,12 +517,83 @@ h2 {
   margin-top: 4px;
 }
 
+/* Just-in-time "why" step between picking a topic and searching. */
+.topic-why {
+  display: grid;
+  gap: 12px;
+  max-width: 560px;
+  margin-top: 8px;
+}
+.topic-why .why-statement {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 700;
+  margin: 6px 0 0;
+}
+.topic-why #why-back {
+  justify-self: start;
+  padding: 0;
+}
+.topic-why #why-input {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+}
+.topic-why #why-go {
+  justify-self: start;
+}
+
 .searching {
   text-align: center;
   margin-top: 48px;
   display: grid;
   gap: 16px;
   justify-items: center;
+}
+
+/* Recent-headlines list shown while searching for a match. */
+.news-list {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 460px;
+  text-align: left;
+  margin-top: 14px;
+}
+.news-head {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 0;
+}
+.news-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s ease, transform 0.08s ease;
+}
+.news-item:hover {
+  border-color: var(--accent);
+}
+.news-title {
+  font-size: 14.5px;
+  line-height: 1.35;
+}
+.news-src {
+  font-size: 11.5px;
+  color: var(--muted);
 }
 .spinner {
   width: 44px;

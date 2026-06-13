@@ -85,8 +85,8 @@
         <h2>Where do you stand?</h2>
         <p class="muted">
           Set your honest view on each topic. <strong>0 = no opinion</strong> (you
-          won't be matched on it). For any topic you'd like to discuss, add a sentence
-          on <em>why</em> — your match sees it first.
+          won't be matched on it). You'll add a quick <em>why</em> when you pick a
+          topic to discuss.
         </p>
         <label class="nick">
           Nickname
@@ -107,10 +107,20 @@
         </div>
         <div id="queue-list" class="queue-list"></div>
 
+        <div id="topic-why" class="topic-why hidden">
+          <button class="btn link" id="why-back">← Back to topics</button>
+          <p class="why-statement" id="why-statement"></p>
+          <p class="muted">Your stance: <strong id="why-stance"></strong></p>
+          <input id="why-input" type="text" maxlength="280"
+            placeholder="In one line, why? (optional — your match sees this first)" />
+          <button class="btn primary" id="why-go">Find someone who disagrees</button>
+        </div>
+
         <div id="searching" class="searching hidden">
           <div class="spinner"></div>
           <p>Looking for someone who disagrees about <strong id="searching-topic"></strong>…</p>
           <button class="btn ghost" id="cancel-search">Cancel</button>
+          <div id="news-list" class="news-list" aria-live="polite"></div>
         </div>
       </section>
 
