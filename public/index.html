@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BRIDGE — talk to someone who disagrees</title>
+    <meta
+      name="description"
+      content="An anonymous, mediated conversation with someone who holds the opposite view. Understand, don't win."
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">⇌</span>
+        <span class="brandname">BRIDGE</span>
+      </div>
+      <div class="tagline">Understand, don't win.</div>
+    </header>
+
+    <main id="app">
+      <!-- LANDING -->
+      <section class="view" id="view-landing">
+        <div class="hero">
+          <h1>Talk to someone who <em>disagrees</em>.</h1>
+          <p class="lede">
+            BRIDGE pairs you, anonymously, with a stranger who holds the opposite
+            view on a charged topic. You both share your reasoning up front, and a
+            mediator keeps things human. The goal isn't to win — it's to understand
+            why a reasonable person could see it differently.
+          </p>
+          <ul class="rules">
+            <li>🕶️ Fully anonymous — nickname only, no accounts, no IP logging.</li>
+            <li>🤝 Assume good faith. Attack ideas, not people.</li>
+            <li>❓ Ask at least one genuine question.</li>
+            <li>🚪 Leave or report anytime.</li>
+          </ul>
+          <button class="btn primary big" id="start-btn">Get started</button>
+          <p class="fineprint">
+            Conversations are ephemeral and never stored. See how privacy works in
+            the README.
+          </p>
+        </div>
+      </section>
+
+      <!-- ONBOARDING -->
+      <section class="view hidden" id="view-onboarding">
+        <h2>Where do you stand?</h2>
+        <p class="muted">
+          Set your honest view on each topic. <strong>0 = no opinion</strong> (you
+          won't be matched on it). For any topic you'd like to discuss, add a sentence
+          on <em>why</em> — your match sees it first.
+        </p>
+        <label class="nick">
+          Nickname
+          <input id="nickname" type="text" maxlength="32" placeholder="e.g. Riverstone" />
+        </label>
+        <div id="topics-list" class="topics-list"></div>
+        <button class="btn primary" id="onboarding-continue">Continue</button>
+      </section>
+
+      <!-- QUEUE -->
+      <section class="view hidden" id="view-queue">
+        <h2>Pick a topic to discuss</h2>
+        <p class="muted">
+          You'll be matched with someone on the opposite side. If no one's around in a
+          few seconds, a good-faith practice partner will step in.
+        </p>
+        <div id="queue-list" class="queue-list"></div>
+
+        <div id="searching" class="searching hidden">
+          <div class="spinner"></div>
+          <p>Looking for someone who disagrees about <strong id="searching-topic"></strong>…</p>
+          <button class="btn ghost" id="cancel-search">Cancel</button>
+        </div>
+      </section>
+
+      <!-- CHAT -->
+      <section class="view hidden" id="view-chat">
+        <div class="chat-header">
+          <div>
+            <div class="chat-topic" id="chat-topic"></div>
+            <div class="chat-sub" id="chat-sub"></div>
+          </div>
+          <div class="chat-actions">
+            <button class="btn ghost small" id="report-btn">Report</button>
+            <button class="btn ghost small" id="leave-btn">Leave</button>
+          </div>
+        </div>
+        <div class="messages" id="messages"></div>
+        <form class="composer" id="composer">
+          <input
+            id="composer-input"
+            type="text"
+            maxlength="2000"
+            autocomplete="off"
+            placeholder="Say something in good faith…"
+          />
+          <button class="btn primary" type="submit">Send</button>
+        </form>
+      </section>
+
+      <!-- FEEDBACK -->
+      <section class="view hidden" id="view-feedback">
+        <h2>That's a wrap.</h2>
+        <p class="muted" id="feedback-reason"></p>
+        <p>Did this help you understand the other side a little better?</p>
+        <div class="feedback-btns">
+          <button class="btn primary" data-understood="true">Yes, I get it more now</button>
+          <button class="btn ghost" data-understood="false">Not really</button>
+        </div>
+        <label class="changed">
+          <input type="checkbox" id="changed-mind" /> It actually shifted my thinking
+        </label>
+        <div>
+          <button class="btn link" id="again-btn">Have another conversation</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

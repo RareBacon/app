@@ -1,0 +1,5 @@
+# Runtime, ephemeral, never meant for version control
+node_modules/
+data/
+*.log
+.DS_Store

@@ -1,0 +1,92 @@
+import { store, api, showView, toast, escapeHtml, stanceLabel } from './api.js';
+
+let endedReason = null;
+
+export function enterChat(matched) {
+  store.room = matched;
+  endedReason = null;
+  const topic = matched.topic;
+  document.getElementById('chat-topic').textContent = topic.title;
+  document.getElementById('chat-sub').textContent = topic.statement;
+
+  const other = matched.participants.find((p) => p.nickname !== matched.you.nickname);
+  document.getElementById('messages').innerHTML = '';
+  showView('view-chat');
+  toast(
+    other
+      ? `Matched with ${other.nickname} — they ${stanceLabel(other.stance).toLowerCase()}.`
+      : 'Matched.',
+  );
+  document.getElementById('composer-input').focus();
+}
+
+export function appendMessage(m) {
+  const wrap = document.getElementById('messages');
+  const isMediator = m.from === 'mediator';
+  const isMe = store.room && m.from === store.token;
+  const cls = isMediator ? 'mediator' : isMe ? 'me' : 'them';
+  const div = document.createElement('div');
+  div.className = `msg ${cls} kind-${m.kind || 'user'}`;
+  div.innerHTML = `<div class="who">${escapeHtml(m.name)}</div><div class="body">${escapeHtml(
+    m.text,
+  )}</div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+export function wireChat(onEnded) {
+  document.getElementById('composer').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('composer-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    try {
+      await api('/api/message', { token: store.token, text });
+    } catch (err) {
+      toast(err.message);
+    }
+  });
+
+  document.getElementById('leave-btn').addEventListener('click', async () => {
+    await api('/api/leave', { token: store.token }).catch(() => {});
+    endedReason = 'You left the conversation.';
+    onEnded('left');
+  });
+
+  document.getElementById('report-btn').addEventListener('click', async () => {
+    if (!confirm('Report this conversation and end it? No personal data is collected.')) return;
+    await api('/api/report', { token: store.token, reason: 'user-report' }).catch(() => {});
+    endedReason = 'Thanks — the conversation was ended and an anonymous report was filed.';
+    onEnded('reported');
+  });
+}
+
+const REASONS = {
+  left: 'You left the conversation.',
+  reported: 'Thanks — the conversation was ended and an anonymous report was filed.',
+  // The other side ended it.
+  'left-remote': 'The other person left.',
+};
+
+export function showFeedback(reason) {
+  const text = endedReason || REASONS[reason] || REASONS['left-remote'] || '';
+  document.getElementById('feedback-reason').textContent = text;
+  showView('view-feedback');
+}
+
+export function wireFeedback(onAgain) {
+  document.querySelectorAll('[data-understood]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      await api('/api/feedback', {
+        token: store.token,
+        topic: store.room?.topic?.id,
+        understoodBetter: btn.dataset.understood === 'true',
+        changedMind: document.getElementById('changed-mind').checked,
+      }).catch(() => {});
+      toast('Thanks for the feedback.');
+      btn.disabled = true;
+    });
+  });
+  document.getElementById('again-btn').addEventListener('click', onAgain);
+}

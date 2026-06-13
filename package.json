@@ -1,0 +1,14 @@
+{
+  "name": "bridge",
+  "version": "0.1.0",
+  "description": "Talk to someone who disagrees — an anonymous, mediated chat that pairs people with opposite views to reduce political polarization.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "smoke": "node scripts/smoke.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
