@@ -219,11 +219,28 @@ h2 {
   gap: 10px;
 }
 .rules li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   background: var(--panel);
   border: 1px solid var(--line);
   padding: 13px 16px;
   border-radius: 12px;
-  box-shadow: var(--shadow-sm);
+}
+.rule-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.rule-icon svg {
+  width: 19px;
+  height: 19px;
 }
 
 /* Buttons */
@@ -327,7 +344,6 @@ h2 {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 20px;
-  box-shadow: var(--shadow-sm);
 }
 .topic-card .statement {
   font-family: var(--serif);
@@ -386,6 +402,11 @@ h2 {
   gap: 7px;
   padding: 20px;
   border-radius: var(--radius);
+  box-shadow: none;
+}
+.queue-card:hover {
+  transform: none;
+  box-shadow: none;
 }
 .queue-card .qt {
   font-family: var(--serif);
@@ -483,7 +504,6 @@ h2 {
   border-radius: 16px;
   background: var(--panel);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-sm);
   animation: pop 0.2s ease;
 }
 @keyframes pop {
