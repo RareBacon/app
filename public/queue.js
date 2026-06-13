@@ -32,6 +32,7 @@ export function renderQueue() {
 async function joinTopic(topicId) {
   const topic = store.topics.find((t) => t.id === topicId);
   searchingTopic = topicId;
+  document.getElementById('queue-intro').classList.add('hidden');
   document.getElementById('queue-list').classList.add('hidden');
   document.getElementById('searching').classList.remove('hidden');
   document.getElementById('searching-topic').textContent = topic ? topic.title : topicId;
@@ -55,6 +56,7 @@ async function cancelSearch() {
 
 function resetQueueView() {
   document.getElementById('searching').classList.add('hidden');
+  document.getElementById('queue-intro').classList.remove('hidden');
   document.getElementById('queue-list').classList.remove('hidden');
 }
 
