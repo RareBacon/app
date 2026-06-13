@@ -1,4 +1,4 @@
-import { store, api, showView, toast, escapeHtml, stanceLabel } from './api.js';
+import { store, api, showView, toast, hideToast, escapeHtml, stanceLabel } from './api.js';
 
 let endedReason = null;
 
@@ -64,12 +64,15 @@ export function wireChat(onEnded) {
 
 const REASONS = {
   left: 'You left the conversation.',
-  reported: 'Thanks — the conversation was ended and an anonymous report was filed.',
+  // Shown to the OTHER party when someone reports — neutral, doesn't imply they
+  // filed it (and doesn't reveal who did).
+  reported: 'This conversation was ended.',
   // The other side ended it.
   'left-remote': 'The other person left.',
 };
 
 export function showFeedback(reason) {
+  hideToast(); // don't let a stale "Matched with…" toast linger into this view
   const text = endedReason || REASONS[reason] || REASONS['left-remote'] || '';
   document.getElementById('feedback-reason').textContent = text;
   showView('view-feedback');

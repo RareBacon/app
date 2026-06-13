@@ -69,6 +69,11 @@ export function toast(message) {
   toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
 }
 
+export function hideToast() {
+  clearTimeout(toastTimer);
+  document.getElementById('toast').classList.add('hidden');
+}
+
 export function escapeHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;')
