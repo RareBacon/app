@@ -1,4 +1,5 @@
 import { store, api, showView, toast, hideToast, escapeHtml, stanceLabel } from './api.js';
+import { loadNews } from './newsfeed.js';
 
 let endedReason = null;
 
@@ -12,6 +13,8 @@ export function enterChat(matched) {
   const other = matched.participants.find((p) => p.nickname !== matched.you.nickname);
   document.getElementById('messages').innerHTML = '';
   showView('view-chat');
+  // Topic coverage to browse alongside the conversation (hidden on mobile).
+  loadNews(topic.id, document.getElementById('chat-news-list'));
   toast(
     other
       ? `Matched with ${other.nickname} — they ${stanceLabel(other.stance).toLowerCase()}.`

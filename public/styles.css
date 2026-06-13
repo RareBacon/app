@@ -164,6 +164,10 @@ body {
   margin: 0 auto;
   padding: 40px 22px 90px;
 }
+/* The chat view widens to fit the side news panel (see showView). */
+#app.wide {
+  max-width: 1080px;
+}
 
 .view {
   animation: fade 0.4s ease;
@@ -622,6 +626,62 @@ h2 {
 }
 
 /* Chat */
+/* Chat + side news panel. Two columns on wide screens; on mobile the panel is
+   hidden and the conversation goes full width (see the 900px media query). */
+.chat-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 28px;
+  align-items: start;
+}
+.chat-news {
+  position: sticky;
+  top: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  padding: 16px;
+  max-height: 72vh;
+  overflow-y: auto;
+}
+.chat-news .news-list {
+  margin-top: 0;
+  max-width: none;
+}
+.news-lean {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 7px;
+}
+.lean-left {
+  color: #2f6db0;
+  background: color-mix(in srgb, #2f6db0 14%, transparent);
+}
+.lean-center {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+}
+.lean-right {
+  color: #b6443c;
+  background: color-mix(in srgb, #b6443c 14%, transparent);
+}
+
+@media (max-width: 900px) {
+  #app.wide {
+    max-width: 760px;
+  }
+  .chat-layout {
+    grid-template-columns: 1fr;
+  }
+  .chat-news {
+    display: none;
+  }
+}
+
 .chat-header {
   display: flex;
   align-items: flex-start;

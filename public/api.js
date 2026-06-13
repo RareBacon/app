@@ -57,6 +57,8 @@ export function connectStream() {
 export function showView(id) {
   document.querySelectorAll('.view').forEach((v) => v.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
+  // The chat view widens the app to fit the side news panel.
+  document.getElementById('app').classList.toggle('wide', id === 'view-chat');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

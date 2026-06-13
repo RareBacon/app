@@ -1,9 +1,14 @@
-import { store, api, getJson, toast, escapeHtml, stanceLabel } from './api.js';
+import { store, api, toast, escapeHtml, stanceLabel } from './api.js';
+import { loadNews } from './newsfeed.js';
 
 let searchingTopic = null;
 let selectedTopic = null;
 
 export function renderQueue() {
+  // Always enter the queue on a clean topic list — never a stale searching panel
+  // left over from a previous conversation.
+  resetQueueView();
+
   const list = document.getElementById('queue-list');
   list.innerHTML = store.topics
     .map((t) => {
@@ -64,36 +69,14 @@ async function joinTopic(topicId, reasoning) {
   document.getElementById('queue-list').classList.add('hidden');
   document.getElementById('searching').classList.remove('hidden');
   document.getElementById('searching-topic').textContent = topic ? topic.title : topicId;
-  loadNews(topicId);
+  loadNews(topicId, document.getElementById('news-list'), {
+    head: 'While you wait — recent coverage',
+  });
   try {
     await api('/api/queue', { token: store.token, topic: topicId, reasoning });
   } catch (e) {
     toast(e.message);
     resetQueueView();
-  }
-}
-
-// Recent headlines about the topic, to read while waiting. Best-effort: if the
-// feed is blocked or empty, we just show nothing.
-async function loadNews(topicId) {
-  const box = document.getElementById('news-list');
-  box.innerHTML = '';
-  try {
-    const { items } = await getJson(`/api/news?topic=${encodeURIComponent(topicId)}`);
-    if (searchingTopic !== topicId || !items || !items.length) return;
-    box.innerHTML =
-      `<p class="news-head">While you wait — recent coverage</p>` +
-      items
-        .map(
-          (a) =>
-            `<a class="news-item" href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">
-               <span class="news-title">${escapeHtml(a.title)}</span>
-               ${a.source ? `<span class="news-src">${escapeHtml(a.source)}</span>` : ''}
-             </a>`,
-        )
-        .join('');
-  } catch {
-    /* offline or blocked — leave the wait clean */
   }
 }
 
@@ -106,6 +89,8 @@ async function cancelSearch() {
 }
 
 function resetQueueView() {
+  searchingTopic = null;
+  selectedTopic = null;
   document.getElementById('searching').classList.add('hidden');
   document.getElementById('topic-why').classList.add('hidden');
   document.getElementById('news-list').innerHTML = '';
@@ -114,6 +99,5 @@ function resetQueueView() {
 }
 
 export function leaveQueueView() {
-  searchingTopic = null;
   resetQueueView();
 }

@@ -126,29 +126,36 @@
 
       <!-- CHAT -->
       <section class="view hidden" id="view-chat">
-        <div class="chat-header">
-          <div>
-            <div class="chat-topic" id="chat-topic"></div>
-            <div class="chat-sub" id="chat-sub"></div>
+        <div class="chat-layout">
+          <div class="chat-main">
+            <div class="chat-header">
+              <div>
+                <div class="chat-topic" id="chat-topic"></div>
+                <div class="chat-sub" id="chat-sub"></div>
+              </div>
+              <div class="chat-actions">
+                <button class="btn ghost small" id="report-btn">Report</button>
+                <button class="btn ghost small" id="leave-btn">Leave</button>
+              </div>
+            </div>
+            <div class="messages" id="messages"></div>
+            <form class="composer" id="composer">
+              <input
+                id="composer-input"
+                type="text"
+                maxlength="2000"
+                autocomplete="off"
+                placeholder="Say something in good faith…"
+              />
+              <button class="btn primary send-btn" type="submit" aria-label="Send message">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </button>
+            </form>
           </div>
-          <div class="chat-actions">
-            <button class="btn ghost small" id="report-btn">Report</button>
-            <button class="btn ghost small" id="leave-btn">Leave</button>
-          </div>
+          <aside class="chat-news" id="chat-news">
+            <div id="chat-news-list" class="news-list"></div>
+          </aside>
         </div>
-        <div class="messages" id="messages"></div>
-        <form class="composer" id="composer">
-          <input
-            id="composer-input"
-            type="text"
-            maxlength="2000"
-            autocomplete="off"
-            placeholder="Say something in good faith…"
-          />
-          <button class="btn primary send-btn" type="submit" aria-label="Send message">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </button>
-        </form>
       </section>
 
       <!-- FEEDBACK -->

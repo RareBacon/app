@@ -22,6 +22,105 @@ const NEWS_QUERIES = {
   'universal-healthcare': 'universal healthcare policy',
 };
 
+// Curated, credible outlets tagged by rough political lean. Matching is a
+// case-insensitive substring test against the RSS <source> name. Classifications
+// are approximate and intentionally tunable — the goal is a credible, spectrum-
+// spanning mix, not a verdict on any outlet. Substrings are chosen to be
+// distinctive (e.g. 'associated press', not a bare 'ap') to avoid false matches.
+const SOURCES = [
+  // left / center-left
+  { match: 'new york times', lean: 'left' },
+  { match: 'nytimes', lean: 'left' },
+  { match: 'washington post', lean: 'left' },
+  { match: 'cnn', lean: 'left' },
+  { match: 'msnbc', lean: 'left' },
+  { match: 'npr', lean: 'left' },
+  { match: 'the guardian', lean: 'left' },
+  { match: 'vox', lean: 'left' },
+  { match: 'the atlantic', lean: 'left' },
+  { match: 'politico', lean: 'left' },
+  { match: 'los angeles times', lean: 'left' },
+  { match: 'the new yorker', lean: 'left' },
+  // center / wire / public
+  { match: 'reuters', lean: 'center' },
+  { match: 'associated press', lean: 'center' },
+  { match: 'ap news', lean: 'center' },
+  { match: 'bbc', lean: 'center' },
+  { match: 'axios', lean: 'center' },
+  { match: 'the hill', lean: 'center' },
+  { match: 'bloomberg', lean: 'center' },
+  { match: 'usa today', lean: 'center' },
+  { match: 'pbs', lean: 'center' },
+  { match: 'cnbc', lean: 'center' },
+  { match: 'c-span', lean: 'center' },
+  { match: 'christian science monitor', lean: 'center' },
+  { match: 'newsnation', lean: 'center' },
+  { match: 'nbc news', lean: 'center' },
+  { match: 'abc news', lean: 'center' },
+  { match: 'cbs news', lean: 'center' },
+  // right / center-right
+  { match: 'wall street journal', lean: 'right' },
+  { match: 'fox news', lean: 'right' },
+  { match: 'national review', lean: 'right' },
+  { match: 'new york post', lean: 'right' },
+  { match: 'ny post', lean: 'right' },
+  { match: 'washington examiner', lean: 'right' },
+  { match: 'washington times', lean: 'right' },
+  { match: 'reason', lean: 'right' },
+  { match: 'the dispatch', lean: 'right' },
+  { match: 'the daily wire', lean: 'right' },
+  { match: 'the telegraph', lean: 'right' },
+  { match: 'newsmax', lean: 'right' },
+  { match: 'the free press', lean: 'right' },
+];
+
+const LEAN_ORDER = ['left', 'center', 'right'];
+const MAX_PER_OUTLET = 2;
+
+function leanOf(source) {
+  const s = String(source || '').toLowerCase();
+  for (const { match, lean } of SOURCES) {
+    if (s.includes(match)) return lean;
+  }
+  return null;
+}
+
+// From a pool of parsed items, keep only credible outlets and round-robin across
+// left/center/right for a balanced spread (≤2 per outlet). Falls back to the
+// unfiltered top items when too few credible sources are present.
+export function selectBalanced(pool, limit = LIMIT) {
+  const allowed = pool
+    .map((it) => ({ ...it, lean: leanOf(it.source) }))
+    .filter((it) => it.lean);
+
+  if (allowed.length < 2) return pool.slice(0, limit); // sparse feed — degrade
+
+  const buckets = { left: [], center: [], right: [] };
+  for (const it of allowed) buckets[it.lean].push(it);
+
+  const perOutlet = new Map();
+  const out = [];
+  let progressed = true;
+  while (out.length < limit && progressed) {
+    progressed = false;
+    for (const lean of LEAN_ORDER) {
+      const b = buckets[lean];
+      while (b.length) {
+        const it = b.shift();
+        const key = String(it.source || '').toLowerCase();
+        const count = perOutlet.get(key) || 0;
+        if (count >= MAX_PER_OUTLET) continue;
+        perOutlet.set(key, count + 1);
+        out.push(it);
+        progressed = true;
+        break;
+      }
+      if (out.length >= limit) break;
+    }
+  }
+  return out.slice(0, limit);
+}
+
 // topicId -> { ts, items }
 const cache = new Map();
 
@@ -41,7 +140,8 @@ export async function getNewsForTopic(topicId) {
   const xml = await fetchText(url, FETCH_TIMEOUT_MS);
   if (!xml) return hit ? hit.items : []; // serve stale on failure if we have it
 
-  const items = parseItems(xml, LIMIT);
+  // Parse a generous pool, then filter to credible outlets + balance the spread.
+  const items = selectBalanced(parseItems(xml, 40), LIMIT);
   if (items.length) cache.set(topicId, { ts: Date.now(), items });
   return items;
 }
