@@ -102,8 +102,13 @@ body {
   gap: 11px;
 }
 .logo {
-  font-size: 24px;
+  display: inline-flex;
   color: var(--accent);
+}
+.logo svg {
+  width: 23px;
+  height: 23px;
+  display: block;
 }
 .brandname {
   font-family: var(--serif);
@@ -369,7 +374,46 @@ h2 {
 }
 .slider-row input[type="range"] {
   flex: 1;
-  accent-color: var(--accent);
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--panel);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+.slider-row input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--panel);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+.slider-row input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--panel-2);
+}
+.slider-row input[type="range"]:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
 }
 .stance-label {
   min-width: 135px;
