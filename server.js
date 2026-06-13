@@ -31,6 +31,7 @@ import {
   maybeLlmNudge,
 } from './src/mediator.js';
 import { botReply } from './src/bot.js';
+import { clientFingerprint, createLimiter } from './src/ratelimit.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const PUBLIC_DIR = join(__dirname, 'public');
@@ -38,6 +39,17 @@ const DATA_DIR = join(__dirname, 'data');
 const PORT = Number(process.env.PORT || 3000);
 const IDLE_PROMPT_MS = Number(process.env.BRIDGE_IDLE_MS || 45000);
 const BOT_REPLY_DELAY_MS = Number(process.env.BRIDGE_BOT_REPLY_MS || 2500);
+
+// Privacy-preserving throttles. These operate on unreversible IP fingerprints
+// (see src/ratelimit.js); no raw IP is ever stored or logged.
+const limiters = {
+  // Session/identity creation flood control.
+  session: createLimiter({ limit: 20, windowMs: 60_000 }),
+  // Report spam control.
+  report: createLimiter({ limit: 10, windowMs: 60_000 }),
+  // Message flooding control.
+  message: createLimiter({ limit: 40, windowMs: 10_000 }),
+};
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -191,7 +203,12 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { topics: TOPICS });
   }
 
+  // Fingerprint the caller for throttling. The raw IP is hashed immediately inside
+  // clientFingerprint and is never retained, logged, or written to disk.
+  const fp = clientFingerprint(req);
+
   if (req.method === 'POST' && pathname === '/api/session') {
+    if (limiters.session(fp)) return sendJson(res, 429, { error: 'too many requests, slow down' });
     const body = await readBody(req);
     const session = createSession({
       nickname: body.nickname,
@@ -227,6 +244,7 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'POST' && pathname === '/api/message') {
+    if (limiters.message(fp)) return sendJson(res, 429, { error: 'slow down a moment' });
     const body = await readBody(req);
     const session = getSession(body.token);
     if (!session || !session.roomId) return sendJson(res, 401, { error: 'not in a room' });
@@ -270,6 +288,7 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'POST' && pathname === '/api/report') {
+    if (limiters.report(fp)) return sendJson(res, 429, { error: 'too many reports, slow down' });
     const body = await readBody(req);
     const session = getSession(body.token);
     const reason = String(body.reason || 'unspecified').slice(0, 100);

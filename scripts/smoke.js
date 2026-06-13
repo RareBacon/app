@@ -179,6 +179,17 @@ async function main() {
   check('feedback ok', fb.status === 200 && fb.json.ok);
   sc.close();
 
+  console.log('5) Rate limiter throttles a flood (without storing IPs)');
+  let got429 = false;
+  for (let i = 0; i < 30; i++) {
+    const r = await post('/api/session', { nickname: 'Flood', stances: { taxes: 1 } });
+    if (r.status === 429) {
+      got429 = true;
+      break;
+    }
+  }
+  check('session flood eventually returns 429', got429);
+
   console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
   process.exit(failures === 0 ? 0 : 1);
 }

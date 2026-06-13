@@ -77,16 +77,30 @@ This is a politics app, so privacy is a feature, not an afterthought.
 - **Light-touch moderation.** We flag hostility to *nudge*, not to censor — message
   text is never altered or deleted.
 
-### Abuse throttling (design note, not yet implemented)
+### Abuse throttling (implemented — `src/ratelimit.js`)
 
-If repeat-offender rate-limiting is ever needed, the privacy-preserving pattern is:
-compute `HMAC-SHA256(ip, secret)` where `secret` is generated fresh at process start
-and **never persisted**, keep only that hash in memory with a short TTL, and never
-log the raw IP. You can then throttle a misbehaving hash without being able to
-reverse it to an IP — and after a restart even the hashes are meaningless. The OS
-socket layer transiently sees the IP regardless, so the real protections are: don't
-persist it, disable IP access logs, and (for a real deployment) run behind a proxy
-that strips it.
+Rate limiting works **without storing IPs**. Each request's IP is turned into a
+one-way fingerprint — `HMAC-SHA256(ip, secret)` — where `secret` is generated fresh
+at process start and **never persisted or logged**. Only the fingerprint is kept, in
+memory, with a short TTL and periodic sweep. You can throttle a misbehaving
+fingerprint without being able to reverse it to an IP, and after a restart a new
+secret makes every previous fingerprint meaningless noise. The raw IP exists only as
+a transient local variable during hashing.
+
+Current limits (sliding window, per fingerprint):
+
+| Endpoint        | Limit            |
+| --------------- | ---------------- |
+| `POST /api/session` | 20 / minute  |
+| `POST /api/report`  | 10 / minute  |
+| `POST /api/message` | 40 / 10s     |
+
+Over the limit → HTTP `429`. No request logging includes IPs.
+
+`X-Forwarded-For` is **ignored by default** (clients could spoof it); set
+`BRIDGE_TRUST_PROXY=1` only when running behind a trusted proxy. The OS socket layer
+transiently sees the IP regardless, so for a real deployment also disable proxy
+access logs and run behind something that strips the IP before it reaches the app.
 
 ## Project layout
 
