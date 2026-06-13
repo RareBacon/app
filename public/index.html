@@ -135,7 +135,9 @@
             autocomplete="off"
             placeholder="Say something in good faith…"
           />
-          <button class="btn primary" type="submit">Send</button>
+          <button class="btn primary send-btn" type="submit" aria-label="Send message">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
         </form>
       </section>
 
@@ -145,7 +147,7 @@
         <p class="muted" id="feedback-reason"></p>
         <p>Did this help you understand the other side a little better?</p>
         <div class="feedback-btns">
-          <button class="btn primary" data-understood="true">Yes, I get it more now</button>
+          <button class="btn primary" data-understood="true">Yes, clearer now</button>
           <button class="btn ghost" data-understood="false">Not really</button>
         </div>
         <label class="changed">
