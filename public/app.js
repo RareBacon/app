@@ -52,6 +52,10 @@ on('ended', (data) => {
 // Default behavior follows the OS (no data-theme attribute). The toggle sets an
 // explicit attribute that overrides the OS preference and is remembered.
 const themeToggle = document.getElementById('theme-toggle');
+const SUN_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+const MOON_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
 function effectiveTheme() {
   const forced = document.documentElement.dataset.theme;
   if (forced === 'dark' || forced === 'light') return forced;
@@ -59,7 +63,8 @@ function effectiveTheme() {
 }
 function refreshThemeIcon() {
   const dark = effectiveTheme() === 'dark';
-  themeToggle.textContent = dark ? '☀️' : '🌙';
+  // Show the icon for the theme you'd switch TO.
+  themeToggle.innerHTML = dark ? SUN_ICON : MOON_ICON;
   themeToggle.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
 }
 themeToggle.addEventListener('click', () => {
