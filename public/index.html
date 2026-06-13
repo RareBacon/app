@@ -8,6 +8,15 @@
       name="description"
       content="An anonymous, mediated conversation with someone who holds the opposite view. Understand, don't win."
     />
+    <!-- Apply any saved theme before paint to avoid a flash of the wrong theme. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('bridge-theme');
+          if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+        } catch (e) {}
+      })();
+    </script>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -16,7 +25,12 @@
         <span class="logo">⇌</span>
         <span class="brandname">BRIDGE</span>
       </div>
-      <div class="tagline">Understand, don't win.</div>
+      <div class="topbar-right">
+        <span class="tagline">Understand, don't win.</span>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+          🌙
+        </button>
+      </div>
     </header>
 
     <main id="app">
